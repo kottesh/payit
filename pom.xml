@@ -25,6 +25,15 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+
+    <!--jdbc driver 23c (refer SK's notion for reference)-->
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc11</artifactId>
+      <version>23.3.0.23.09</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/resources/ojdbc11.jar</systemPath>
+    </dependency>
   </dependencies>
 
   <build>

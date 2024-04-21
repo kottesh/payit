@@ -81,6 +81,10 @@ class Bank {
         }
     }
 
+    public Account getAccount(Long acNo) {
+        return accounts.get(acNo); 
+    } 
+
     /**
      *  displays information such bank name, id, and 
      *  accounts associated with the bank
