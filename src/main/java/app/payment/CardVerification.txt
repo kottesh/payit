@@ -1,0 +1,21 @@
+CardVerification:
+    * It is used to authenticate both credit and debit card.
+      
+    * Methods used:
+          + boolean authenticate(String cardNumber, Date expDate, int cvv, int amount, String toAccountNumber);
+
+          - Connection connectToDB();
+                    ~ Used to connect to the database whenever needed.
+
+          - boolean validateDetails(String cardNumber, Date expDate, int cvv);
+                    ~ Validates the card number, expiry date and cvv provided with the data from the database.
+
+          - boolean verifyOTP(String cardNumber);
+                    ~ Used for 2-Factor verification.
+
+          - boolean authoriseTransaction(int amount, String cardNumber);
+                    ~ Checks for sufficient amount and authorizes to proceed the transanction.
+
+          - boolean transferAmount(long amount, String toAccountNumber, String cardNumber);
+                    ~ Debits the amount from the card holder account(issuer) and Credits the amount to the account respective to the account number.
+                    ~ Updates the data base as well.
