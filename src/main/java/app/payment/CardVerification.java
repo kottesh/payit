@@ -9,26 +9,6 @@ public class CardVerification {
 
     // private static UserDetails user;
 
-    private Connection connectToDB() {
-
-        final String URL = "jdbc:oracle:thin:@localhost:1521/FREEPDB1";
-        final String USR_NAME = "system";
-        final String PWD = "sk";
-        final String JDBC_DRIVER = "oracle.jdbc.driver.OracleDriver";
-
-        Connection connection = null;
-
-        try {
-            Class.forName(JDBC_DRIVER);
-            connection = DriverManager.getConnection(URL, USR_NAME, PWD);
-
-        } catch (ClassNotFoundException | SQLException e) {
-            System.err.println(e.getMessage());
-        }
-
-        return connection;
-    }
-
     public boolean authenticate(String cardNumber, Date expDate, int cvv, int amount, String toAccountNumber) {
 
         /*
@@ -73,81 +53,24 @@ public class CardVerification {
 
     }
 
-    private boolean verifyOTP(String cardNumber) {
+    private Connection connectToDB() {
+
+        final String URL = "jdbc:oracle:thin:@localhost:1521/FREEPDB1";
+        final String USR_NAME = "system";
+        final String PWD = "sk";
+        final String JDBC_DRIVER = "oracle.jdbc.driver.OracleDriver";
+
         Connection connection = null;
-        PreparedStatement statement = null;
 
         try {
-            connection = connectToDB();
+            Class.forName(JDBC_DRIVER);
+            connection = DriverManager.getConnection(URL, USR_NAME, PWD);
 
-            String cardTableQuery = "SELECT phone_number FROM customers WHERE customer_id = (SELECT customer_id FROM accounts WHERE acc_no = (SELECT acc_no FORM cards WHERE card_number = ?))";
-            statement = connection.prepareStatement(cardTableQuery);
-            statement.setString(1, cardNumber);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (!resultSet.next()) return false;
-
-            if (!OTP.verifyOTP(resultSet.getString("phone_number"))) {
-                System.err.println("Error validating Credit card: OTP verification failed.");
-                return false;
-            }
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             System.err.println(e.getMessage());
-            return false;
-        } finally {
-            try {
-                if (statement != null)
-                    statement.close();
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
         }
 
-        return true;
-    }
-
-    private boolean transferAmount(long amount, String toAccountNumber, String cardNumber) {
-
-        PreparedStatement statement = null;
-        Connection connection = null;
-        try {
-            connection = connectToDB();
-            connection.setAutoCommit(false);
-
-            String query1 = "UPDATE accounts SET balance = balance + ? WHERE acc_no = ?";
-            statement = connection.prepareStatement(query1);
-            statement.setLong(1, amount);
-            statement.setString(2, toAccountNumber);
-            if (statement.executeUpdate() != 1) {
-                connection.rollback();
-                throw new RuntimeException("Could not update the reciver's account");
-            }
-
-            String query2 = "UPDATE accounts SET balance = balance - ? WHERE acc_no = (SELECT acc_no FROM cards WHERE card_number = ?)";
-            statement = connection.prepareStatement(query2);
-            statement.setLong(1, amount);
-            statement.setString(2, cardNumber);
-            if (statement.executeUpdate() != 1) {
-                connection.rollback();
-                throw new RuntimeException("Could not update the reciver's account");
-            }
-        } catch (SQLException | RuntimeException e) {
-            System.err.println(e.getMessage());
-            return false;
-        } finally {
-            try {
-                if (statement != null)
-                    statement.close();
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                System.err.println(e.getMessage());
-            }
-        }
-
-        return true;
+        return connection;
     }
 
     public boolean validateDetails(String cardNumber, Date expDate, int cvv) {
@@ -201,6 +124,41 @@ public class CardVerification {
         return true;
     }
 
+    private boolean verifyOTP(String cardNumber) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+
+        try {
+            connection = connectToDB();
+
+            String cardTableQuery = "SELECT phone_number FROM customers WHERE customer_id = (SELECT customer_id FROM accounts WHERE acc_no = (SELECT acc_no FORM cards WHERE card_number = ?))";
+            statement = connection.prepareStatement(cardTableQuery);
+            statement.setString(1, cardNumber);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (!resultSet.next()) return false;
+
+            if (!new OTP().verifyOTP(resultSet.getString("phone_number"))) {
+                System.err.println("Error validating Credit card: OTP verification failed.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+            return false;
+        } finally {
+            try {
+                if (statement != null)
+                    statement.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return true;
+    }
+
     public boolean authoriseTransaction(int amount, String cardNumber) {
 
         Connection connection = null;
@@ -230,6 +188,48 @@ public class CardVerification {
                     return false;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            return false;
+        } finally {
+            try {
+                if (statement != null)
+                    statement.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return true;
+    }
+
+    private boolean transferAmount(long amount, String toAccountNumber, String cardNumber) {
+
+        PreparedStatement statement = null;
+        Connection connection = null;
+        try {
+            connection = connectToDB();
+            connection.setAutoCommit(false);
+
+            String query1 = "UPDATE accounts SET balance = balance + ? WHERE acc_no = ?";
+            statement = connection.prepareStatement(query1);
+            statement.setLong(1, amount);
+            statement.setString(2, toAccountNumber);
+            if (statement.executeUpdate() != 1) {
+                connection.rollback();
+                throw new RuntimeException("Could not update the reciver's account");
+            }
+
+            String query2 = "UPDATE accounts SET balance = balance - ? WHERE acc_no = (SELECT acc_no FROM cards WHERE card_number = ?)";
+            statement = connection.prepareStatement(query2);
+            statement.setLong(1, amount);
+            statement.setString(2, cardNumber);
+            if (statement.executeUpdate() != 1) {
+                connection.rollback();
+                throw new RuntimeException("Could not update the reciver's account");
+            }
+        } catch (SQLException | RuntimeException e) {
+            System.err.println(e.getMessage());
             return false;
         } finally {
             try {
