@@ -7,7 +7,7 @@ class OTP {
 
     private static final int OTP_LENGTH = 6;
 
-    public static boolean verifyOTP(String phoneNumber) {
+    public boolean verifyOTP(String phoneNumber) {
         String otp = new String();
         otp = generateOTP();
 
@@ -18,7 +18,7 @@ class OTP {
         return (otp.equals(enteredOTP)) ? true : false;
     }
 
-    private static String getOTP() {
+    private String getOTP() {
         System.out.print("Enter the OTP: ");
         Scanner scan = new Scanner(System.in);
 
@@ -27,7 +27,7 @@ class OTP {
         return otp + "";
     }
 
-    private static String generateOTP() {
+    private String generateOTP() {
 
         StringBuilder otp = new StringBuilder();
         SecureRandom random = new SecureRandom();
@@ -40,7 +40,7 @@ class OTP {
     }
 
     public static void main(String[] args) {
-        OTP.verifyOTP("1234567890");
+        new OTP().verifyOTP("1234567890");
         return;
     }
 }
