@@ -4,6 +4,8 @@ import java.awt.*;
 
 public class SendNotification {
 
+    /* The OTP is sent as a notification to the Windows using the "java.awt.* - SystemTray". */
+    
     public static boolean sendOTP(String otp) {
         SystemTray tray = SystemTray.getSystemTray();
         Image image = Toolkit.getDefaultToolkit().getImage("tray.gif");
