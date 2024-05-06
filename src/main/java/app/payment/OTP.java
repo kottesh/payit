@@ -6,19 +6,15 @@ import java.security.SecureRandom;
 class OTP {
 
     private static final int OTP_LENGTH = 6;
-    // private static final long OTP_DURATION = 30000l;
 
     public static boolean verifyOTP(String phoneNumber) {
         String otp = new String();
         otp = generateOTP();
 
-        System.out.println(otp);
-        // Sending otp to the given number
-        if (!sendSMS.sendOTP(otp.toString(), phoneNumber))
+        if (!SendNotification.sendOTP(otp.toString()))
             return false; // Failed to Send OTP
 
         String enteredOTP = getOTP();
-
         return (otp.equals(enteredOTP)) ? true : false;
     }
 
@@ -44,7 +40,8 @@ class OTP {
     }
 
     public static void main(String[] args) {
-        System.out.println("Successfull");
+        OTP.verifyOTP("1234567890");
+        return;
     }
 }
 
