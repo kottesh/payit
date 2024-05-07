@@ -20,7 +20,7 @@ public class SendNotification {
             return false;
         }
 
-        trayIcon.displayMessage("CUBIC-BANK", "OTP: " + otp + ". Don't share to anyone!", TrayIcon.MessageType.NONE);
+        trayIcon.displayMessage("CUBIC-BANK", "OTP: " + otp + ". Don't share with anyone!", TrayIcon.MessageType.NONE);
 
         return true;
     }
