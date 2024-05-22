@@ -1,8 +1,33 @@
-import javax.swing.*;
-import java.awt.*;
-import javax.swing.border.*;
+package app.ui;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
 public class PaymentSoftwareUI extends JFrame {
     private JPanel mainPanel;
@@ -10,6 +35,10 @@ public class PaymentSoftwareUI extends JFrame {
     private JButton proceedButton;
 
     public PaymentSoftwareUI() {
+        FlatRobotoFont.install();
+        FlatLaf.registerCustomDefaultsSource("themes");
+        UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 16));
+        FlatMacLightLaf.setup();    
         setTitle("Payment Software");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

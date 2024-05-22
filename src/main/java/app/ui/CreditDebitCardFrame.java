@@ -1,11 +1,91 @@
+package app.ui;
+
 import javax.swing.*;
+import javax.swing.text.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
-public class CreditDebitCardFrame extends JFrame {
-    public CreditDebitCardFrame() {
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+
+import app.ui.manager.panelHandler;
+
+// Document filters
+class NumberOnlyFilter extends DocumentFilter {
+
+    private int maxChar;
+
+    NumberOnlyFilter(int maxChar) {
+        this.maxChar = maxChar;
+    }
+
+    @Override
+    public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+            throws BadLocationException {
+
+        if (string != null) {
+            for (int i = 0; i < string.length(); i++) {
+                if (!Character.isDigit(string.charAt(i))) {
+                    return;
+                }
+            }
+        }
+
+        if (maxChar == 0)
+            super.insertString(fb, offset, string, attr);
+        else if ((fb.getDocument().getLength() + string.length()) <= maxChar)
+            super.insertString(fb, offset, string, attr);
+    }
+
+    @Override
+    public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+            throws BadLocationException {
+
+        if (text != null) {
+            for (int i = 0; i < text.length(); i++) {
+                if (!Character.isDigit(text.charAt(i))) {
+                    return;
+                }
+            }
+        }
+
+        if (maxChar == 0)
+            super.replace(fb, offset, length, text, attrs);
+        if ((fb.getDocument().getLength() + text.length()) <= maxChar)
+            super.replace(fb, offset, length, text, attrs);
+    }
+}
+
+public class CreditDebitCardFrame extends JFrame implements ActionListener {
+
+    private JTextField nameField;
+    private JTextField cardNumberField;
+    private JTextField cvvField;
+    private JButton confirmButton;
+    JComboBox<String> monthComboBox;
+    JComboBox<String> yearComboBox;
+
+    private String cardHolderName;
+    private String cardNumber;
+    private String cvv;
+    private CardVerification cv;
+
+    public CreditDebitCardFrame(String toAccount, double amount) {
+
+        cv = new CardVerification(toAccount, amount);
+
+        FlatRobotoFont.install();
+        FlatLaf.registerCustomDefaultsSource("themes");
+        UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 16));
+        FlatMacLightLaf.setup();
         setTitle("Credit/Debit Card Details");
         setSize(1000, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -16,7 +96,7 @@ public class CreditDebitCardFrame extends JFrame {
         JPanel mainPanel = new JPanel(new GridLayout(1, 2));
 
         // Left panel for image
-        ImageIcon imageIcon = new ImageIcon("Java/image-500x800.png");
+        ImageIcon imageIcon = new ImageIcon("src/main/java/app/ui/pics/image-500x800.png");
         Image image = imageIcon.getImage();
         Image resizedImage = image.getScaledInstance(500, -1, Image.SCALE_SMOOTH); // Resize image
         ImageIcon resizedImageIcon = new ImageIcon(resizedImage);
@@ -30,73 +110,113 @@ public class CreditDebitCardFrame extends JFrame {
 
         // Credit card details
         JLabel nameLabel = new JLabel("Card Holder Name:");
-        JTextField nameField = new JTextField(20);
-        customizeTextField(nameField);
+        nameField = new JTextField(20);
+        nameField.setEditable(false);
 
         JLabel cardNumberLabel = new JLabel("Card Number (16 digits):");
-        JTextField cardNumberField = new JTextField(16);
-        customizeTextField(cardNumberField);
+        cardNumberField = new JTextField(16);
+        cardNumberField.setDocument(new PlainDocument());
+        ((AbstractDocument) cardNumberField.getDocument()).setDocumentFilter(new NumberOnlyFilter(16));
+
         cardNumberField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                checkCardNumberLength(cardNumberField);
+                updateNameField();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                checkCardNumberLength(cardNumberField);
+                updateNameField();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                checkCardNumberLength(cardNumberField);
+                updateNameField();
+            }
+
+            private void updateNameField() {
+                String cardNumber = cardNumberField.getText();
+                if (cardNumber.length() == 16){
+                    String name = cv.getName(cardNumber);
+                    nameField.setText(name);
+                } else {
+                    nameField.setText("");
+                }
             }
         });
 
         // Expiry date selection
         JLabel expiryLabel = new JLabel("Expiry:");
-        JComboBox<String> monthComboBox = new JComboBox<>(getMonths());
-        JComboBox<String> yearComboBox = new JComboBox<>(getYears());
+        monthComboBox = new JComboBox<>(getMonths());
+        yearComboBox = new JComboBox<>(getYears());
         JPanel expiryPanel = new JPanel(new GridLayout(1, 2));
         expiryPanel.add(monthComboBox);
         expiryPanel.add(yearComboBox);
         expiryPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel cvvLabel = new JLabel("CVV:");
-        JTextField cvvField = new JTextField(3);
-        customizeTextField(cvvField);
-        cvvField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                checkCVVLength(cvvField);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                checkCVVLength(cvvField);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                checkCVVLength(cvvField);
-            }
-        });
-
-        JLabel emailLabel = new JLabel("Email ID:");
-        JTextField emailField = new JTextField(20);
-        customizeTextField(emailField);
-
-        // Account number
-        JLabel accountNumberLabel = new JLabel("To Bank Account Number:");
-        JTextField accountNumberField = new JTextField(16);
-        customizeTextField(accountNumberField);
+        cvvField = new JPasswordField(3);
+        cvvField.putClientProperty(FlatClientProperties.STYLE, "" + "showRevealButton: true");
+        cvvField.setDocument(new PlainDocument());
+        ((AbstractDocument) cvvField.getDocument()).setDocumentFilter(new NumberOnlyFilter(3));
 
         // Confirm payment button
-        JButton confirmButton = new JButton("Confirm Payment");
+        confirmButton = new JButton("Confirm Payment");
         customizeButton(confirmButton);
+        confirmButton.setEnabled(false); // Initially disable the button
         confirmButton.addActionListener(e -> {
-            if (isAllDataValid()) {
-                JOptionPane.showMessageDialog(this, "Payment Done!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            cardHolderName = nameField.getText();
+            cardNumber = cardNumberField.getText();
+            cvv = cvvField.getText();
+
+            // Get the selected values as strings
+            String selectedMonth = (String) monthComboBox.getSelectedItem();
+            String selectedYear = (String) yearComboBox.getSelectedItem();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            String dateStr = selectedYear + "-" + selectedMonth + "-31";
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+            System.out.println(date);
+
+            if (!cv.validateDetails(cardNumber, date, Integer.parseInt(cvv))) {
+                return;
+            }
+
+            OTP otp = new OTP("Global Bank");
+            String otpCheck = otp.generateOTP();
+            if (otpCheck == null) {
+                JOptionPane.showMessageDialog(null, "Error generating OTP.");
+                return;
+            }
+
+            JPanel otpPanel = new JPanel();
+            otpPanel.setLayout(new BoxLayout(otpPanel, BoxLayout.Y_AXIS));
+            JLabel otpLabel = new JLabel("Enter OTP:");
+            JTextField otpField = new JTextField(6);
+            otpPanel.add(otpLabel);
+            otpPanel.add(otpField);
+            int result = JOptionPane.showConfirmDialog(null, otpPanel, "OTP Verification",
+                    JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                if (otp.verifyOTP(otpField.getText())) {
+                    if (cv.makeTransaction()) {
+                        JOptionPane.showMessageDialog(null, "Payment Done!", "Success",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        this.dispose();
+                        panelHandler.getInstance().show(new Home());
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(null, "Error making transaction!", "Failed",
+                                JOptionPane.ERROR_MESSAGE);
+                                nameField.setText("");
+                                cardNumberField.setText("");
+                                cvvField.setText("");
+                                monthComboBox.setSelectedIndex(0);
+                                yearComboBox.setSelectedIndex(0);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid OTP!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -112,12 +232,6 @@ public class CreditDebitCardFrame extends JFrame {
         detailsPanel.add(Box.createVerticalStrut(20));
         detailsPanel.add(createCenterAlignedPanel(cvvLabel));
         detailsPanel.add(cvvField);
-        detailsPanel.add(Box.createVerticalStrut(20));
-        detailsPanel.add(createCenterAlignedPanel(emailLabel));
-        detailsPanel.add(emailField);
-        detailsPanel.add(Box.createVerticalStrut(20));
-        detailsPanel.add(createCenterAlignedPanel(accountNumberLabel));
-        detailsPanel.add(accountNumberField);
         detailsPanel.add(Box.createVerticalStrut(40));
         detailsPanel.add(createCenterAlignedPanel(confirmButton));
 
@@ -126,6 +240,59 @@ public class CreditDebitCardFrame extends JFrame {
 
         // Add main panel to content pane
         getContentPane().add(mainPanel);
+
+        // Document listeners for input fields to enable/disable the Confirm Payment
+        // button
+        nameField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+        });
+
+        cardNumberField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+        });
+
+        cvvField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                checkEnableConfirmButton();
+            }
+        });
     }
 
     private JPanel createCenterAlignedPanel(JComponent component) {
@@ -159,24 +326,8 @@ public class CreditDebitCardFrame extends JFrame {
         button.setMaximumSize(new Dimension(200, 40));
     }
 
-    private void checkCardNumberLength(JTextField cardNumberField) {
-        String cardNumber = cardNumberField.getText();
-        if (cardNumber.length() > 16) {
-            JOptionPane.showMessageDialog(this, "Card number cannot exceed 16 digits", "Error", JOptionPane.ERROR_MESSAGE);
-            cardNumberField.setText(cardNumber.substring(0, 16));
-        }
-    }
-
-    private void checkCVVLength(JTextField cvvField) {
-        String cvv = cvvField.getText();
-        if (cvv.length() > 3) {
-            JOptionPane.showMessageDialog(this, "CVV cannot exceed 3 digits", "Error", JOptionPane.ERROR_MESSAGE);
-            cvvField.setText(cvv.substring(0, 3));
-        }
-    }
-
     private String[] getMonths() {
-        return new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"};
+        return new String[] { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12" };
     }
 
     private String[] getYears() {
@@ -190,13 +341,34 @@ public class CreditDebitCardFrame extends JFrame {
 
     private boolean isAllDataValid() {
         // Add your validation logic here
-        return true; // Placeholder, replace with actual validation
+        return !nameField.getText().isEmpty() &&
+                !cardNumberField.getText().isEmpty() &&
+                !cvvField.getText().isEmpty(); // Add any additional validation checks if needed
+    }
+
+    // private boolean verifyOTP(String otp) {
+    // // Replace this with your OTP verification logic
+    // return otp != null && otp.equals("123456");
+    // }
+
+    private void checkEnableConfirmButton() {
+        boolean enableButton = !nameField.getText().isEmpty() &&
+                !cardNumberField.getText().isEmpty() &&
+                !cvvField.getText().isEmpty() &&
+                isAllDataValid(); // Add any additional validation checks if needed
+        confirmButton.setEnabled(enableButton);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+        System.out.println("here");
+
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                CreditDebitCardFrame frame = new CreditDebitCardFrame();
+                CreditDebitCardFrame frame = new CreditDebitCardFrame("0123456789", 1000);
                 frame.setVisible(true);
             }
         });

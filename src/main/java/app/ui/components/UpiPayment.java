@@ -1,18 +1,31 @@
+package app.ui.components;
+
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
+
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class UpiPaymentUI extends JFrame {
-    private JTextField fromUpiField, toUpiField, amountField, remarksField, pinField;
+public class UpiPayment extends JFrame {
+    private JTextField fromUpiField, toUpiField, amountField, remarksField;
+    private JPasswordField pinField;
     private JButton makePaymentButton;
 
-    private final int TRANSACTION_LIMIT = 25000;
+    private final int TRANSACTION_LIMIT = 100000;
 
-    public UpiPaymentUI() {
+    public UpiPayment() {
+        FlatRobotoFont.install();
+        FlatLaf.registerCustomDefaultsSource("themes");
+        UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 16));
+        FlatMacLightLaf.setup();
         setTitle("UPI Payments - by PayIT");
         setSize(650, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -76,7 +89,7 @@ public class UpiPaymentUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 // Check if From UPI ID and To UPI ID contain '@'
                 if (!fromUpiField.getText().contains("@") || !toUpiField.getText().contains("@")) {
-                    JOptionPane.showMessageDialog(UpiPaymentUI.this, "UPI IDs must contain '@'.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(UpiPayment.this, "UPI IDs must contain '@'.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -84,11 +97,11 @@ public class UpiPaymentUI extends JFrame {
                 try {
                     int amount = Integer.parseInt(amountField.getText());
                     if (amount > TRANSACTION_LIMIT) {
-                        JOptionPane.showMessageDialog(UpiPaymentUI.this, "Transaction amount exceeds limit.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(UpiPayment.this, "Transaction amount exceeds limit.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(UpiPaymentUI.this, "Invalid amount.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(UpiPayment.this, "Invalid amount.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -126,7 +139,8 @@ public class UpiPaymentUI extends JFrame {
         pinFrame.setLayout(new BorderLayout());
 
         // PIN Field
-        pinField = new JTextField(4);
+        pinField = new JPasswordField(4);
+        pinField.putClientProperty(FlatClientProperties.STYLE,"" + "showRevealButton: true");
         pinField.setHorizontalAlignment(JTextField.CENTER);
         pinField.setEditable(false); // Disable manual entry
         pinFrame.add(pinField, BorderLayout.NORTH);
@@ -210,9 +224,10 @@ public class UpiPaymentUI extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new UpiPaymentUI().setVisible(true);
+                new UpiPayment().setVisible(true);
             }
         });
+
     }
 
     class UpiDocument extends PlainDocument {

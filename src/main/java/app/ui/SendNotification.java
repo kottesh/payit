@@ -1,12 +1,10 @@
-package app.payment;
+package app.ui;
 
 import java.awt.*;
 
 public class SendNotification {
 
-    /* The OTP is sent as a notification to the Windows using the "java.awt.* - SystemTray". */
-    
-    public static boolean sendOTP(String otp) {
+    public static boolean sendOTP(String otp, String title) {
         SystemTray tray = SystemTray.getSystemTray();
         Image image = Toolkit.getDefaultToolkit().getImage("tray.gif");
 
@@ -20,8 +18,14 @@ public class SendNotification {
             return false;
         }
 
-        trayIcon.displayMessage("CUBIC-BANK", "OTP: " + otp + ". Don't share with anyone!", TrayIcon.MessageType.NONE);
+        trayIcon.displayMessage(title, "OTP: " + otp + ". Don't share with anyone!", TrayIcon.MessageType.NONE);
 
         return true;
+    }
+
+    public static void main(String[] args) {
+        String otp = "12345";
+        if (!sendOTP(otp, "OTP")) {System.err.println("Could not initialize system tray.");}
+        else{System.out.println("One Time Password" +"Your One Time Password is: "+otp);}
     }
 }

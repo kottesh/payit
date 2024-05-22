@@ -1,15 +1,21 @@
-package app;
+package app.payment;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.*;
+
+import java.time.LocalDate;
 
 public class CardVerification {
 
     // private static UserDetails user;
 
-    public boolean authenticate(String cardNumber, Date expDate, int cvv, int amount, String toAccountNumber) {
+    public boolean authenticate(String cardNumber, LocalDate expDate, int cvv, int amount, String toAccountNumber) {
 
         /*
          * Authenticate Card:
@@ -27,7 +33,7 @@ public class CardVerification {
         }
 
         if (!validateDetails(cardNumber, expDate, cvv)) {
-            System.out.println("Error validating card\nCV: Card verifivation error.");
+            System.out.println("Error validating card\nCV: Card verification error.");
             return false;
         }
 
@@ -54,7 +60,6 @@ public class CardVerification {
     }
 
     private Connection connectToDB() {
-
         final String URL = "jdbc:oracle:thin:@localhost:1521/FREEPDB1";
         final String USR_NAME = "system";
         final String PWD = "sk";
@@ -65,7 +70,6 @@ public class CardVerification {
         try {
             Class.forName(JDBC_DRIVER);
             connection = DriverManager.getConnection(URL, USR_NAME, PWD);
-
         } catch (ClassNotFoundException | SQLException e) {
             System.err.println(e.getMessage());
         }
@@ -73,7 +77,7 @@ public class CardVerification {
         return connection;
     }
 
-    public boolean validateDetails(String cardNumber, Date expDate, int cvv) {
+    public boolean validateDetails(String cardNumber, LocalDate expDate, int cvv) {
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -81,7 +85,7 @@ public class CardVerification {
         try {
             connection = connectToDB();
 
-            String cardTableQuery = "SELECT card_expire, card_cvv FROM cards WHERE card_number = ?";
+            String cardTableQuery = "SELECT card_expiry, card_cvv FROM cards WHERE card_number = ?";
             statement = connection.prepareStatement(cardTableQuery);
             statement.setString(1, cardNumber);
             ResultSet resultSet = statement.executeQuery();
@@ -92,14 +96,16 @@ public class CardVerification {
             }
 
             // Convert string date to util date for comparison.
-            SimpleDateFormat format = new SimpleDateFormat("MM/yyyy");
+            // SimpleDateFormat format = new SimpleDateFormat("yyyy/mm/dd");
+            // System.err.println(format);
             try {
-                Date dbExpDate = format.parse(resultSet.getString("card_expire"));
-                if (!dbExpDate.after(expDate)) {
-                    System.out.println("Error code-54: Expired card.");
-                    return false;
-                }
-            } catch (ParseException e) {
+                // System.out.println(resultSet.getString("card_expiry"));
+                LocalDate dbExpDate = LocalDate.parse(resultSet.getString("card_expiry"));
+                // if (!dbExpDate.after(expDate)) {
+                    // System.out.println("Error code-54: Expired card.");
+                    // return false;
+                // }
+            } catch (Exception e) {
                 System.err.println(e);
                 return false;
             }
@@ -167,7 +173,7 @@ public class CardVerification {
         try {
             connection = connectToDB();
 
-            String sqlQuery = "SELECT a.balance, a.limit, c.card_type FROM accounts a INNER JOIN cards c ON a.acc_no = c.acc_no WHERE acc_no = (SELECT acc_no FROM cards WHERE card_number = ?)";
+            String sqlQuery = "SELECT a.balance, a.min_bal , c.card_type FROM accounts a INNER JOIN cards c ON a.acc_no = c.acc_no WHERE acc_no = (SELECT acc_no FROM cards WHERE card_number = ?)";
             statement = connection.prepareStatement(sqlQuery);
             statement.setString(1, cardNumber);
             ResultSet resultSet = statement.executeQuery();
@@ -250,8 +256,7 @@ public class CardVerification {
         // Create an instance of the creditCard class and call the validateCreditCard
         // method
         CardVerification card = new CardVerification();
-        card.authenticate("1234567890123456", new Date(), 123, 48999, "1234123412341234");
-
+        LocatDate date = LocalDate.now();
+        card.authenticate("4333333333333333", date, 789, 48999, "ACC00001");
     }
-
 }

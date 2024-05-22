@@ -14,6 +14,9 @@ CREATE TABLE customers (
     gender CHAR(1) CHECK (gender IN ('M', 'F', 'O')) -- M - Male, F - Female, O - Others.
 );
 
+SELECT * FROM customers;
+
+
 -- banks table
 CREATE TABLE banks (
     bank_id NUMBER PRIMARY KEY,
@@ -37,27 +40,29 @@ CREATE TABLE accounts (
     CONSTRAINT fk_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
 );
 
+SELECT * FROM accounts;
+
 -- table for UPI service
 CREATE TABLE upi_service (
-    upi_id NUMBER PRIMARY KEY,
-    acc_no VARCHAR2(20) NOT NULL,
-    upi_vpa VARCHAR2(20),
-    upi_limit NUMBER,
-    upi_transaction_limit NUMBER(10, 3),
+    acc_no VARCHAR2(20) NOT NULL PRIMARY KEY,
+    upi_vpa VARCHAR2(20) NOT NULL,
+    upi_limit NUMBER NOT NULL,
+    upi_transaction_limit NUMBER(10, 3) NOT NULL,
     upi_pin NUMBER(4) NOT NULL,
     CONSTRAINT fk_account_upi FOREIGN KEY (acc_no) REFERENCES accounts(acc_no)
 );
+DROP TABLE upi_service;
 
 
 -- login credentials table
 CREATE TABLE login_credentials (
-    credential_id NUMBER PRIMARY KEY,
-    acc_no VARCHAR2(20) NOT NULL,
+    acc_no VARCHAR2(20) NOT NULL PRIMARY KEY,
     username VARCHAR2(20),
     login_pwd VARCHAR2(20),
     transaction_pwd VARCHAR2(20),
     CONSTRAINT fk_account_credentials FOREIGN KEY (acc_no) REFERENCES accounts(acc_no)
 );
+
 
 -- cards table
 CREATE TABLE cards (
@@ -105,17 +110,17 @@ VALUES
 ('ACC00002', 'CURRENT', 2, 'IFSC0002', 15000.00, 1000.00, 2, 'Active', TO_DATE('2020-02-01', 'YYYY-MM-DD')),
 ('ACC00003', 'SAVINGS', 3, 'IFSC0003', 20000.00, 500.00, 3, 'Active', TO_DATE('2020-03-01', 'YYYY-MM-DD'));
 
-INSERT INTO upi_service (upi_id, acc_no, upi_vpa, upi_limit, upi_transaction_limit, upi_pin)
+INSERT INTO upi_service (acc_no, upi_vpa, upi_limit, upi_transaction_limit, upi_pin)
 VALUES 
-(1, 'ACC00001', 'john.doe@upi', 20, 10000, 1111),
-(2, 'ACC00002', 'jane.smith@upi', 20, 15000,3333),
-(3, 'ACC00003', 'michael.johnson@upi', 20, 20000, 4444);
+('ACC00001', 'john.doe@upi', 20, 10000, 1111),
+('ACC00002', 'jane.smith@upi', 20, 15000,3333),
+('ACC00003', 'michael.johnson@upi', 20, 20000, 4444);
 
-INSERT INTO login_credentials (credential_id, acc_no, username, login_pwd, transaction_pwd)
+INSERT INTO login_credentials (acc_no, username, login_pwd, transaction_pwd)
 VALUES 
-(1, 'ACC00001', 'john.doe', 'password123', 'txn123'),
-(2, 'ACC00002', 'jane.smith', 'password123', 'txn123'),
-(3, 'ACC00003', 'michael.johnson', 'password123', 'txn123');
+('ACC00001', 'john.doe', 'password123', 'txn123'),
+('ACC00002', 'jane.smith', 'password123', 'txn123'),
+('ACC00003', 'michael.johnson', 'password123', 'txn123');
 
 INSERT INTO cards (card_id, acc_no, card_type, card_number, card_cvv, card_expiry)
 VALUES 
@@ -131,3 +136,17 @@ VALUES
 
 
 SELECT * FROM customers;
+SELECT * FROM accounts;
+SELECT * FROM login_credentials;
+SELECT * FROM UPI_SERVICE;
+
+DELETE FROM customers
+WHERE customer_id = 75229486;
+
+DELETE FROM accounts
+WHERE customer_id = 75229486;
+
+DELETE FROM accounts
+WHERE acc_no = (SELECT acc_no FROM accounts WHERE customer_id = 75229486);
+
+

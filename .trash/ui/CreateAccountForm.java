@@ -1,4 +1,11 @@
+package app.ui;
+
 import javax.swing.*;
+
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,6 +19,11 @@ public class CreateAccountForm extends JFrame {
     private JComboBox<String> genderComboBox;
 
     public CreateAccountForm() {
+        FlatRobotoFont.install();
+        FlatLaf.registerCustomDefaultsSource("themes");
+        UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 16));
+        FlatMacLightLaf.setup();    
+
         setTitle("Create Account for PayIT");
         setSize(800, 550);
         setLocationRelativeTo(null);

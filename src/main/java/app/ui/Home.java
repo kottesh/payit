@@ -1,44 +1,54 @@
 package app.ui;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
+import javax.swing.*;
 import com.formdev.flatlaf.FlatClientProperties;
-import app.ui.manager.*;
-import app.ui.upi.*;
 
+import app.ui.manager.panelHandler;
 import net.miginfocom.swing.MigLayout;
+import java.awt.*;
 
 public class Home extends JPanel {
-    private JButton bank; 
+    private JButton bank;
     private JButton pay;
-    private JLabel title;
+    Home() {
+        init();
+    }
 
-    public Home() {
-        setLayout(new MigLayout("fill, insets 20", "[center]", "[center]"));
+    private void init() {
         bank = new JButton("BANK");
+        bank.setPreferredSize(new Dimension(100, 50));
         bank.addActionListener(e -> {
-            Manager.getInstance().showUi(new Home());
+            panelHandler.getInstance().show(new Login());
         });
         pay = new JButton("PAY");
+        pay.setPreferredSize(new Dimension(100, 50));
         pay.addActionListener(e -> {
-            Manager.getInstance().showUi(new Upi());
+            panelHandler.getInstance().show(new ReceiversInfo());
+            System.out.println("Passing to Payment Gateway");
         });
-        
-        JPanel panel = new JPanel(new MigLayout("wrap, fillx, insets 35 45 30 45", "fill, 250:500"));
-        panel.putClientProperty(
-            FlatClientProperties.STYLE, "" +  
-            "arc: 20;" +
-            "[light]background:darken(@background, 5%);" +
-            "[dark]background:lighten(@background, 5%)"
+
+        setLayout(new MigLayout("fill, insets 20", "[center]", "[center]"));
+        JPanel pane = new JPanel(new MigLayout("fillx, wrap, insets 35 45 30 45", "fill, 300:400"));
+        pane.putClientProperty(
+            FlatClientProperties.STYLE, "arc: 20;" +
+            "[light]background: darken(@background, 3%);"
         );
 
-        title = new JLabel("Payit");
-        title.putClientProperty(FlatClientProperties.STYLE, "" + "font:bold +10");
-        panel.add(title);
-        panel.add(bank);
-        panel.add(pay);
-        add(panel);
+        JLabel header = new JLabel("Payit");
+        header.putClientProperty(
+            FlatClientProperties.STYLE, 
+            "font: bold +16;"
+        );
+
+        pane.add(header);
+        JLabel caption = new JLabel("Revolutionizing digital payments");
+        caption.putClientProperty(
+            FlatClientProperties.STYLE, 
+            "[light]foreground: lighten(@foreground, 30%);"
+        );
+        pane.add(caption, "span, gapbottom 14, align center");
+        pane.add(bank, "gapy 12, split 2");
+        pane.add(pay);
+        add(pane);
     }
 }
